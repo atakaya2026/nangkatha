@@ -121,7 +121,7 @@
 </style>
 </head>
 <body>
-<a id="skip" href="pc_demo_windows.html">건너뛰기 ▸</a>
+<a id="skip" href="pc_demo_windows.html">ကျော်မည် ▸</a>
 <button id="homeBtn" onclick="location.href='index.html'">Home</button>
 
 <div id="stage">
@@ -129,8 +129,8 @@
 
   <div id="panel" class="ov">
     <div id="dots"></div>
-    <div id="title">닌카티 · 1분 배우기</div>
-    <div id="goal" hidden><span class="lbl">따라쓰기</span><span class="word" id="goal-word"></span><span class="cnt" id="goal-cnt"></span></div>
+    <div id="title">Nangkatha · ၁ မိနစ်နဲ့ လေ့လာမယ်</div>
+    <div id="goal" hidden><span class="lbl">လိုက်ရိုက်ပါ</span><span class="word" id="goal-word"></span><span class="cnt" id="goal-cnt"></span></div>
     <div id="panel-body">
       <div id="editor" hidden></div>
       <div id="row">
@@ -140,7 +140,7 @@
     </div>
   </div>
 
-  <div id="next-prompt" class="ov" hidden>▶ 스페이스바로 계속</div>
+  <div id="next-prompt" class="ov" hidden>▶ ဆက်ရန် Space bar ကို နှိပ်ပါ</div>
 
   <div id="kbd-wrap" class="ov">
     <img id="kbdimg" src="images/pc_map.png" alt="">
@@ -386,32 +386,32 @@ const VOWEL_KEYS = ["u","i","j","l",";","m",",","."];
 
 const SCENES = [
   { type:"explain", diagram:true, rings:[{key:"w",cls:""}],
-    coach:'자음은 자음표의 각 행 5글자를 <b>앞 2개 (1·2)</b> 와 <b>뒤 3개 (5·3·4)</b> — 두 묶음씩 나눠 배열했어요.<br>' +
-          '<b style="color:#1aa3e8">파랑 글자</b>는 우측의 <b>▶</b> 를 추가로 눌러 입력.' },
+    coach:'ဗျည်းဇယားရဲ့ တစ်တန်းစီက စာလုံး ၅ လုံးကို <b>ရှေ့ ၂ လုံး (၁·၂)</b> နဲ့ <b>နောက် ၃ လုံး (၅·၃·၄)</b> — အုပ်စု ၂ ခုခွဲ၍ စီစဉ်ထားပါတယ်။<br>' +
+          '<b style="color:#1aa3e8">အပြာရောင်စာလုံး</b>က ညာဘက်က <b>▶</b> ကို ထပ်နှိပ်ပြီး ရိုက်ပါ။' },
 
   { type:"explain", rings: VOWEL_KEYS.map(k => ({ key:k, cls:"" })),
-    coach:'모음·성조는 자음과 <b>붙는 방향</b>의 키에 배열되어 있어요.<br>위에 붙는 건 <b>위</b>에, 아래에 붙는 건 <b>아래</b>에.' },
+    coach:'သရသံနဲ့ အသံသင်္ကေတတွေက ဗျည်းနဲ့ <b>တွဲတဲ့ ဘက်</b>အလိုက် ခလုတ်တွေမှာ စီထားပါတယ်။<br>အပေါ်တွဲတာ <b>အပေါ်</b>မှာ၊ အောက်တွဲတာ <b>အောက်</b>မှာ။' },
 
   { type:"explain", rings:[{key:"o",cls:"pulse"}], peekPlus:true,
-    coach:'자음쌓기·특수문자는 <b style="color:#0a7d31">그린 ＋</b> 를 누르세요.<br><span style="color:#6b7280;font-size:.9em">지금 눌러서 어떤 자판인지 살짝 봐 두세요.</span>' },
+    coach:'ဗျည်းဆင့်နဲ့ အထူးအက္ခရာတွေအတွက် <b style="color:#0a7d31">အစိမ်းရောင် ＋</b> ကို နှိပ်ပါ။<br><span style="color:#6b7280;font-size:.9em">အခု နှိပ်ကြည့်ပြီး ကီးဘုတ်က ဘယ်လိုလဲ ကြည့်ထားပါ။</span>' },
 
-  { type:"practice", word:"ဆီ", win:"됐어요! ✓&nbsp; ဆီ",
+  { type:"practice", word:"ဆီ", win:"ရပြီ! ✓&nbsp; ဆီ",
     steps:[
-      { kid:"g_ca", expect:"စ",  coach:'<b>ဆ</b> 가 있는 키를 누르세요.' },
-      { kid:"STEP", expect:"ဆ",  coach:'옆글자는 <b>▶</b> 로.&nbsp; စ → ဆ' },
-      { kid:"i",    expect:"ဆိ", coach:'위에 붙는 부호는 <b>위</b>에.' },
-      { kid:"i",    expect:"ဆီ", coach:'한 번 더 누르세요.&nbsp; ိ → ီ' }
+      { kid:"g_ca", expect:"စ",  coach:'<b>ဆ</b> ပါတဲ့ ကီးကို နှိပ်ပါ။' },
+      { kid:"STEP", expect:"ဆ",  coach:'ဘေးစာလုံးကို <b>▶</b> နဲ့။&nbsp; စ → ဆ' },
+      { kid:"i",    expect:"ဆိ", coach:'အပေါ်တွဲတဲ့ သင်္ကေတက <b>အပေါ်</b>။' },
+      { kid:"i",    expect:"ဆီ", coach:'နောက်တစ်ကြိမ် နှိပ်ပါ။&nbsp; ိ → ီ' }
     ] },
 
-  { type:"practice", word:"ဒုက္ခ", win:"됐어요! ✓&nbsp; ဒုက္ခ", last:true,
+  { type:"practice", word:"ဒုက္ခ", win:"ရပြီ! ✓&nbsp; ဒုက္ခ", last:true,
     steps:[
-      { kid:"g_na",       expect:"န",     coach:'<b>ဒ</b> 가 있는 키를 누르세요.' },
-      { kid:"STEP",       expect:"ဒ",     coach:'옆글자는 <b>▶</b> 로.&nbsp; န → ဒ' },
-      { kid:",",          expect:"ဒု",    coach:'아래 붙는 부호는 <b>아래</b>에.' },
-      { kid:"g_ka",       expect:"ဒုက",   coach:'<b>က</b> 를 눌러요.' },
-      { kid:"PLUS",       checkPlus:true, coach:'자음을 쌓으려면 <b style="color:#0a7d31">그린 ＋</b> 키.' },
-      { kid:"stack:g_ka", expect:"ဒုက္က", coach:'<b>ခ</b> 가 있는 <b>က</b> 키를 눌러요.' },
-      { kid:"STEP",       expect:"ဒုက္ခ", coach:'<b>▶</b> 를 눌러 ခ 로 변경.' }
+      { kid:"g_na",       expect:"န",     coach:'<b>ဒ</b> ပါတဲ့ ကီးကို နှိပ်ပါ။' },
+      { kid:"STEP",       expect:"ဒ",     coach:'ဘေးစာလုံးကို <b>▶</b> နဲ့။&nbsp; န → ဒ' },
+      { kid:",",          expect:"ဒု",    coach:'အောက်တွဲတဲ့ သင်္ကေတက <b>အောက်</b>။' },
+      { kid:"g_ka",       expect:"ဒုက",   coach:'<b>က</b> ကို နှိပ်ပါ။' },
+      { kid:"PLUS",       checkPlus:true, coach:'ဗျည်းဆင့်ဖို့ <b style="color:#0a7d31">အစိမ်းရောင် ＋</b> ကီး။' },
+      { kid:"stack:g_ka", expect:"ဒုက္က", coach:'<b>ခ</b> ပါတဲ့ <b>က</b> ကီးကို နှိပ်ပါ။' },
+      { kid:"STEP",       expect:"ဒုက္ခ", coach:'<b>▶</b> နှိပ်ပြီး ခ သို့ ပြောင်းပါ။' }
     ] }
 ];
 
@@ -456,7 +456,7 @@ const TUT = {
 
     if (practice) {
       goalWord.textContent = sc.word;
-      goalCnt.textContent = this.done ? "완성" : (this.pi + 1) + " / " + sc.steps.length;
+      goalCnt.textContent = this.done ? "ပြီးပြီ" : (this.pi + 1) + " / " + sc.steps.length;
       goalEl.classList.toggle('ok', this.done);
       editorEl.textContent = getText();
     }
@@ -486,8 +486,8 @@ const TUT = {
       this.nextReady = false; nextPrompt.hidden = true;
     }
     nextPrompt.textContent = isFinal
-      ? "▶ 자유롭게 써 보려면 스페이스바를 누르세요"
-      : "▶ 스페이스바로 계속";
+      ? "▶ လွတ်လပ်စွာ စမ်းရေးရန် Space bar ကို နှိပ်ပါ"
+      : "▶ ဆက်ရန် Space bar ကို နှိပ်ပါ";
   },
 
   onKey(k) {
