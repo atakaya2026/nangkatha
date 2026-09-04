@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Attakkaya Mobile Demo</title>
+
+<style>
+html, body { height:100%; margin:0; padding:0; overflow:hidden; background:#d1d5db; }
+body { display:flex; flex-direction:column; }
+
+#editor{
+  flex:1;
+  width:100%;
+  background:#fff;
+  padding:20px;
+  font-size:32px;
+  border:none;
+  box-sizing:border-box;
+  white-space:pre-wrap;
+  overflow-y:auto;
+  outline:none;
+}
+
+.keyboard-container{
+  background:#bcbfc4;
+  padding:10px;
+  width:100%;
+  box-sizing:border-box;
+  border-top:1px solid #999;
+}
+
+.keyboard{
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:4px;
+  max-width:600px;
+  margin:0 auto;
+}
+
+.key{
+  height:55px;
+  background:#fff;
+  border-radius:6px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  box-shadow:0 3px 1px #888;
+  cursor:pointer;
+  user-select:none;
+  font-size:18px;
+  font-weight:bold;
+}
+
+.key:active{ transform:translateY(2px); box-shadow:none; }
+
+.bottom-bar{
+  grid-column:span 8;
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  gap:4px;
+  margin-top:4px;
+}
+.btn-space{ grid-column:span 4; background:#fff; }
+.btn-enter{ grid-column:span 2; background:#a5d6a7; }
+.btn-123{ grid-column:span 2; background:#e0e0e0; }
+</style>
+</head>
+
+<body>
+
+<div id="editor"></div>
+
+<div class="keyboard-container">
+  <div class="keyboard" id="kbd"></div>
+</div>
+
+<script>
+
+/* ---------------- 기본 맵 ---------------- */
+
+const stepMapRow = {
+  "q":["ဋ","ဌ","ဍ","ဎ","ဏ"],
+  "a":["အ","ဟ","ဠ"],
+  "s":["တ","ထ","ဒ","ဓ"],
+  "d":["က","ခ","ဂ","ဃ"],
+  "f":["ယ","ရ","လ","ဝ"],
+  "x":["စ","ဆ","ဇ","ဈ"],
+  "c":["ပ","ဖ","ဗ","ဘ"]
+};
+
+const nasalKeys = {
+  "န":"န",
+  "င":"င",
+  "သ":"သ",
+  "မ":"မ",
+  "ည":"ည"
+};
+
+const multiTapMap = {
+  "j":["ေ","ြ"],
+  "i":["ိ","ီ","ံ"],
+  "k":["်","ဲ"],
+  "l":["ာ","ါ"],
+  ";":["း","့"],
+  "m":["ှ","ွ"],
+  ",":["ု","ူ"]
+};
+
+const layout3x8 = [
+  ["q","န","င","သ","u","i","o","p"],
+  ["a","s","d","f","j","k","l",";"],
+  ["ည","x","c","မ","m",",",".","BS"]
+];
+
+const E_VOWEL = "\u1031";
+
+/* ---------------- 상태 ---------------- */
+
+let state = {
+  activeBase:null,
+  currentIndex:0,
+  lastTapKey:null,
+  tapIndex:0,
+  pendingE:false
+};
+
+const editor = document.getElementById("editor");
+
+/* ---------------- 렌더 ---------------- */
+
+function render(){
+  const kbd=document.getElementById("kbd");
+  kbd.innerHTML="";
+
+  layout3x8.forEach(row=>{
+    row.forEach(key=>{
+      const div=document.createElement("div");
+      div.className="key";
+
+      if(stepMapRow[key]){
+        div.innerText=stepMapRow[key][0];
+      }
+      else if(nasalKeys[key]){
+        div.innerText=nasalKeys[key];
+      }
+      else if(multiTapMap[key]){
+        div.innerText=multiTapMap[key][0];
+      }
+      else{
+        div.innerText=key==="BS"?"⌫":key.toUpperCase();
+      }
+
+      div.onclick=()=>handleInput(key);
+      kbd.appendChild(div);
+    });
+  });
+
+  const bar=document.createElement("div");
+  bar.className="bottom-bar";
+
+  const btn123=document.createElement("div");
+  btn123.className="key btn-123";
+  btn123.innerText="123";
+
+  const space=document.createElement("div");
+  space.className="key btn-space";
+  space.innerText="SPACE";
+  space.onclick=()=>appendText(" ");
+
+  const enter=document.createElement("div");
+  enter.className="key btn-enter";
+  enter.innerText="ENTER";
+  enter.onclick=()=>appendText("\n");
+
+  bar.appendChild(btn123);
+  bar.appendChild(space);
+  bar.appendChild(enter);
+
+  kbd.appendChild(bar);
+}
+
+function appendText(t){
+  editor.innerText+=t;
+  editor.scrollTop=editor.scrollHeight;
+}
+
+function removeLast(){
+  editor.innerText=editor.innerText.slice(0,-1);
+}
+
+/* ---------------- 입력 로직 ---------------- */
+
+function handleInput(key){
+
+  if(key==="BS"){
+    removeLast();
+    state.pendingE=false;
+    return;
+  }
+
+  /* 멀티탭 모음 */
+
+  if(multiTapMap[key]){
+
+    if(state.lastTapKey===key &&
+       state.tapIndex < multiTapMap[key].length-1){
+
+      state.tapIndex++;
+      removeLast();
+
+    }else{
+      state.lastTapKey=key;
+      state.tapIndex=0;
+    }
+
+    const val=multiTapMap[key][state.tapIndex];
+
+    if(val===E_VOWEL){
+      state.pendingE=true;   // 핵심
+    }
+    else{
+      appendText(val);
+    }
+
+    return;
+  }
+
+  /* 자음 */
+
+  if(stepMapRow[key] || nasalKeys[key]){
+
+    let char=stepMapRow[key]
+      ? stepMapRow[key][0]
+      : nasalKeys[key];
+
+    if(state.pendingE){
+      appendText(char+E_VOWEL);
+      state.pendingE=false;
+    }else{
+      appendText(char);
+    }
+
+    state.lastTapKey=null;
+    return;
+  }
+
+  appendText(key);
+}
+
+render();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<title>Attakkaya Mobile Demo</title>
+<style>
+  html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; background: #d1d5db; }
+  body { display: flex; flex-direction: column; }
+  #editor { 
+    flex: 1; width: 100%; background: #fff; padding: 20px; font-size: 32px; 
+    border: none; box-sizing: border-box; white-space: pre-wrap; word-wrap: break-word; 
+    overflow-y: auto; outline: none;
+  }
+  .keyboard-container {
+    background: #bcbfc4; padding: 10px 5px calc(10px + env(safe-area-inset-bottom));
+    width: 100%; box-sizing: border-box; border-top: 1px solid #999;
+  }
+  .keyboard { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; max-width: 600px; margin: 0 auto; }
+  .key { 
+    height: 55px; background: #ffffff; border-radius: 6px; display: flex; 
+    justify-content: center; align-items: center; box-shadow: 0 3px 1px #888; 
+    cursor: pointer; user-select: none; font-size: 18px; font-weight: bold; 
+  }
+  .key:active { transform: translateY(2px); box-shadow: none; }
+  .base-key { background: #e3f2fd !important; }
+  .plus-active { background: #ffcdd2 !important; border: 2px solid #ef5350; }
+  .plus-vowel-key { background: #f3e5f5 !important; } 
+  .special-small { 
+    grid-column: span 1; background: #e8f5e9 !important; height: 50px; 
+    border-radius: 6px; display: flex; justify-content: center; align-items: center; 
+    box-shadow: 0 3px 1px #888; cursor: pointer; font-size: 18px; font-weight: bold; 
+  }
+  .label-container { display: flex; gap: 4px; }
+  /* 모음 폰트도 자음과 동일하게 두껍게 설정 */
+  .sub-label { font-size: 16px; color: #000; font-weight: bold; } 
+  .bottom-bar { grid-column: span 8; display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; margin-top: 4px; width: 100%; }
+  .btn-123 { grid-column: span 2; background: #e0e0e0; height: 50px; border-radius: 6px; display: flex; justify-content: center; align-items: center; box-shadow: 0 3px 1px #888; cursor: pointer; font-weight: bold; }
+  .btn-space { grid-column: span 4; background: #ffffff; height: 50px; border-radius: 6px; display: flex; justify-content: center; align-items: center; box-shadow: 0 3px 1px #888; cursor: pointer; font-weight: bold; font-size: 14px; }
+  .btn-enter { grid-column: span 2; background: #a5d6a7; height: 50px; border-radius: 6px; display: flex; justify-content: center; align-items: center; box-shadow: 0 3px 1px #888; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="editor"></div>
+<div class="keyboard-container">
+  <div class="keyboard" id="kbd"></div>
+</div>
+
+<script>
+const stepMapRow = {
+    "q": ["ဋ", "ဌ", "ဍ", "ဎ", "ဏ"], "a": ["အ", "ဟ", "ဠ"], "s": ["တ", "ထ", "ဒ", "ဓ"],
+    "d": ["က", "ခ", "ဂ", "ဃ"], "f": ["ယ", "ရ", "လ", "ဝ"], "x": ["စ", "ဆ", "ဇ", "ဈ"],
+    "c": ["ပ", "ဖ", "ဗ", "ဘ"]
+};
+const nasalKeys = { "န": "န", "င": "င", "သ": "သ", "မ": "မ", "ည": "ည" };
+const multiTapMap = {
+    "i": ["ိ", "ီ", "ံ"], "j": ["ေ", "ြ"], "k": ["်", "ဲ"], "l": ["ာ", "ါ"],
+    ";": ["း", "့"], "m": ["ှ", "ွ"], ",": ["ု", "ူ"]
+};
+const plusVowels = { "u": "ဤ", "i": "ဣ", "j": "ဧ", "k": "ဩ", "l": "ဪ", "m": "ဦ", ",": "ဥ" };
+const specialChars = ["ဉ", "၍", "ဿ", "၌", "၎", "၏"];
+const layout3x8 = [
+    ["q", "န", "င", "သ", "u", "i", "o", "p"],
+    ["a", "s", "d", "f", "j", "k", "l", ";"],
+    ["ည", "x", "c", "မ", "m", ",", ".", "BS"]
+];
+
+const ZWNJ = "\u200C";
+const VIRAMA = "\u1039";
+let state = { activeBase: null, currentIndex: 0, lastTapKey: null, tapIndex: 0, isPlusMode: false };
+const editor = document.getElementById('editor');
+
+function render() {
+    const kbd = document.getElementById('kbd');
+    kbd.innerHTML = '';
+    
+    layout3x8.forEach(row => {
+        row.forEach(key => {
+            const k = key.toLowerCase();
+            const keyDiv = document.createElement('div');
+            keyDiv.className = 'key';
+            
+            if (!state.isPlusMode && (k === 'u' || k === 'o')) {
+                keyDiv.style.backgroundColor = "#fff9c4"; 
+                const group = state.activeBase ? stepMapRow[state.activeBase] : null;
+                const targetIdx = state.currentIndex + (k === 'u' ? 1 : 2);
+                if (group && group[targetIdx]) keyDiv.innerText = group[targetIdx];
+                else keyDiv.innerText = k === 'u' ? '➞' : '➞➞';
+            } 
+            else if (state.isPlusMode && (k === 'o' || k === ';' || k === '.')) {
+                keyDiv.innerText = "USER";
+                keyDiv.style.fontSize = "10px";
+            } else if (state.isPlusMode && plusVowels[k]) {
+                keyDiv.innerText = plusVowels[k];
+                keyDiv.classList.add('plus-vowel-key');
+            } else if (multiTapMap[k]) {
+                const container = document.createElement('div');
+                container.className = 'label-container';
+                multiTapMap[k].forEach(c => {
+                    const s = document.createElement('span');
+                    s.className = 'sub-label'; s.innerText = c;
+                    container.appendChild(s);
+                });
+                keyDiv.appendChild(container);
+            } else {
+                if (stepMapRow[k]) keyDiv.classList.add('base-key');
+                if (k === 'p' && state.isPlusMode) keyDiv.classList.add('plus-active');
+                let label = (stepMapRow[k] ? stepMapRow[k][0] : (nasalKeys[key] || (k==='p'?'+':k==='.'?'ျ':key.toUpperCase())));
+                keyDiv.innerText = label;
+            }
+            keyDiv.onclick = () => handleInput(key);
+            kbd.appendChild(keyDiv);
+        });
+    });
+
+    const bottomBar = document.createElement('div');
+    bottomBar.className = 'bottom-bar';
+    if (state.isPlusMode) {
+        specialChars.forEach(char => {
+            const div = document.createElement('div');
+            div.className = 'special-small'; div.innerText = char;
+            div.onclick = () => { 
+                editor.innerText += char; state.isPlusMode = false; 
+                resetStep(); render(); scrollToEnd(); 
+            };
+            bottomBar.appendChild(div);
+        });
+        const enter = document.createElement('div');
+        enter.className = 'btn-enter'; enter.innerText = 'ENTER';
+        enter.onclick = () => { 
+            editor.innerText += '\n'; state.isPlusMode = false; 
+            resetStep(); render(); scrollToEnd(); 
+        };
+        bottomBar.appendChild(enter);
+    } else {
+        const btn123 = document.createElement('div');
+        btn123.className = 'btn-123'; btn123.innerText = '123';
+        const space = document.createElement('div');
+        space.className = 'btn-space'; space.innerText = 'SPACE';
+        space.onclick = () => { editor.innerText += ' '; scrollToEnd(); };
+        const enter = document.createElement('div');
+        enter.className = 'btn-enter'; enter.innerText = 'ENTER';
+        enter.onclick = () => { 
+            editor.innerText += '\n'; resetStep(); 
+            render(); scrollToEnd(); 
+        };
+        bottomBar.appendChild(btn123); bottomBar.appendChild(space); bottomBar.appendChild(enter);
+    }
+    kbd.appendChild(bottomBar);
+}
+
+function scrollToEnd() { editor.scrollTop = editor.scrollHeight; }
+function normalizeEAtEnd() {
+    let t = editor.innerText;
+
+    // 끝에 ZWNJ+ေ 또는 단독 ေ 제거 (하나만)
+    let hadE = false;
+    if (t.endsWith(ZWNJ + "ေ")) {
+        t = t.slice(0, -2);
+        hadE = true;
+    } else if (t.endsWith("ေ")) {
+        t = t.slice(0, -1);
+        hadE = true;
+    }
+
+    if (!hadE) return;
+
+    // base + medials cluster 찾기
+    let match = t.match(/([\u1000-\u1021][\u103B-\u103E]*)$/);
+    if (!match) {
+        editor.innerText = t + "ေ";
+        return;
+    }
+
+    let cluster = match[1];
+    let before = t.slice(0, -cluster.length);
+
+    editor.innerText = before + cluster + "ေ";
+}
+function handleInput(key) {
+    const k = key.toLowerCase();
+    let text = editor.innerText;
+
+    if (k === "bs") { 
+        if (text.endsWith(ZWNJ + "ေ")) editor.innerText = text.slice(0, -2);
+        else editor.innerText = text.slice(0, -1);
+        resetState(); render(); scrollToEnd(); return; 
+    }
+
+    if (k === 'p') { state.isPlusMode = !state.isPlusMode; render(); return; }
+
+    if (state.isPlusMode) {
+        let charToStack = stepMapRow[k] ? stepMapRow[k][0] : nasalKeys[key];
+        if (charToStack) {
+            editor.innerText += VIRAMA + charToStack;
+            resetStep(); 
+            if (stepMapRow[k]) { state.activeBase = k; state.currentIndex = 0; }
+        } else if (plusVowels[k]) {
+            editor.innerText += plusVowels[k];
+            resetStep();
+        }
+        state.isPlusMode = false; render(); scrollToEnd(); return;
+    }
+
+if (stepMapRow[k] || nasalKeys[key]) {
+
+    let char = stepMapRow[k] ? stepMapRow[k][0] : nasalKeys[key];
+    let t = text;
+
+    // 🔥 끝에 ZWNJ+ေ 또는 단독 ေ 있으면 제거
+    let hadE = false;
+
+    if (t.endsWith(ZWNJ + "ေ")) {
+        t = t.slice(0, -2);
+        hadE = true;
+    } else if (t.endsWith("ေ")) {
+        t = t.slice(0, -1);
+        hadE = true;
+    }
+
+    if (hadE) {
+        // 자음 먼저 쓰고, 그 다음에 ေ
+        editor.innerText = t + char + "ေ";
+    } else {
+        editor.innerText = t + char;
+    }
+
+    if (stepMapRow[k]) {
+        state.activeBase = k;
+        state.currentIndex = 0;
+    } else {
+        resetStep();
+    }
+
+    state.lastTapKey = null;
+}
+    else if ((k === 'u' || k === 'o') && state.activeBase) {
+        const group = stepMapRow[state.activeBase];
+        const targetIdx = state.currentIndex + (k === 'u' ? 1 : 2);
+        if (group && group[targetIdx]) {
+            let t = editor.innerText;
+            if (t.endsWith("ေ")) editor.innerText = t.slice(0, -2) + group[targetIdx] + "ေ";
+            else editor.innerText = t.slice(0, -1) + group[targetIdx];
+            state.currentIndex = targetIdx;
+        }
+    } 
+    else if (multiTapMap[k]) {
+        if (state.lastTapKey === k && state.tapIndex < multiTapMap[k].length - 1) {
+            state.tapIndex++;
+            let val = multiTapMap[k][state.tapIndex];
+            if (k === "j" && val === "ြ") {
+
+    editor.innerText += "ြ";
+
+    // 🔥 여기서 항상 정렬
+    normalizeEAtEnd();
+} else {
+                editor.innerText = editor.innerText.slice(0, -1) + val;
+            }
+        } else {
+            state.lastTapKey = k; state.tapIndex = 0;
+            let val = multiTapMap[k][0];
+            if (val === "ေ" && editor.innerText.length > 0) editor.innerText += ZWNJ + val;
+            else editor.innerText += val;
+        }
+        resetStep();
+    } else {
+        editor.innerText += (k === '.' ? 'ျ' : k);
+        resetState();
+    }
+    scrollToEnd();
+    render();
+}
+
+function resetStep() { state.activeBase = null; state.currentIndex = 0; }
+function resetState() { resetStep(); state.lastTapKey = null; state.tapIndex = 0; state.isPlusMode = false; }
+render();
+</script>
+</body>
+</html>
